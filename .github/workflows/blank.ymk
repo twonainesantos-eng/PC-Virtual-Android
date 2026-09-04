@@ -1,0 +1,79 @@
+# ==========================================
+# SIMULADOR DE PC VIRTUAL (CPU & MEMÓRIA)
+# ==========================================
+
+class VirtualPC:
+    def __init__(self, memory_size=100):
+        # Memória RAM do PC Virtual
+        self.memory = [0] * memory_size
+        # Registradores da CPU (Gerais: R1, R2 | Program Counter: PC)
+        self.registers = {"R1": 0, "R2": 0, "PC": 0}
+        self.running = True
+
+    def load_program(self, program):
+        """Carrega o programa na memória a partir da posição 0"""
+        for i, instruction in enumerate(program):
+            self.memory[i] = instruction
+
+    def step(self):
+        """Executa uma instrução por vez (Fetch-Decode-Execute)"""
+        pc = self.registers["PC"]
+        instruction = self.memory[pc]
+        
+        if not instruction:
+            self.running = False
+            return
+
+        parts = instruction.split()
+        opcode = parts[0]
+
+        # Decoder & Executor de Instruções
+        if opcode == "LOAD":     # Carrega valor no registrador (Ex: LOAD R1 10)
+            reg, val = parts[1], int(parts[2])
+            self.registers[reg] = val
+        elif opcode == "ADD":    # Soma R2 em R1 (Ex: ADD R1 R2)
+            reg1, reg2 = parts[1], parts[2]
+            self.registers[reg1] += self.registers[reg2]
+        elif opcode == "SUB":    # Subtrai R2 de R1 (Ex: SUB R1 R2)
+            reg1, reg2 = parts[1], parts[2]
+            self.registers[reg1] -= self.registers[reg2]
+        elif opcode == "STORE":  # Salva o valor do reg na memória (Ex: STORE R1 50)
+            reg, addr = parts[1], int(parts[2])
+            self.memory[addr] = self.registers[reg]
+        elif opcode == "PRINT":  # Mostra o valor de um registrador
+            reg = parts[1]
+            print(f"[SAÍDA DO PC VIRTUAL] {reg} = {self.registers[reg]}")
+        elif opcode == "HALT":   # Desliga o sistema
+            print("[PC VIRTUAL] Sistema finalizado via hardware.")
+            self.running = False
+
+        # Avança para a próxima instrução
+        self.registers["PC"] += 1
+
+    def run(self):
+        """Roda o PC virtual até encontrar a instrução HALT"""
+        print("[PC VIRTUAL] Inicializando o sistema...")
+        while self.running:
+            self.step()
+        print(f"[PC VIRTUAL] Estado final da RAM (Posição 50): {self.memory[50]}")
+
+
+# === SCRIPT DE BOOT / CONFIGURAÇÃO DO SEU PC ===
+if __name__ == "__main__":
+    # Criando o computador virtual
+    meu_pc = VirtualPC()
+
+    # Escrevendo um programa em Assembly fictício
+    # O programa: Coloca 25 em R1, 15 em R2, soma os dois e guarda o resultado na memória 50
+    programa_exemplo = [
+        "LOAD R1 25",
+        "LOAD R2 15",
+        "ADD R1 R2",
+        "PRINT R1",
+        "STORE R1 50",
+        "HALT"
+    ]
+
+    # Carrega e liga o computador
+    meu_pc.load_program(programa_exemplo)
+    meu_pc.run()
